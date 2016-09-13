@@ -1,0 +1,3 @@
+[run]
+source = homebudget
+omit = homebudget/test*
