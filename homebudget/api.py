@@ -13,10 +13,12 @@ API DOCUMENTATION
 import logging
 from time import time
 
+import transaction
 from hashids import Hashids
 
 from pyramid.httpexceptions import HTTPFound, HTTPBadRequest, HTTPNotFound
 from pyramid.view import view_config, view_defaults
+from sqlalchemy.orm.exc import NoResultFound
 
 from .models import (Category,
                      Entry,
@@ -118,19 +120,60 @@ class EntriesRESTView(object):
 
     def __init__(self, request):
         self.request = request
+        self.access_key = request.headers.get('x-access-key', None)
+
+        if self.access_key is None:
+            raise HTTPBadRequest()
+
+        self._query = request.db.query(Entry)
 
     @view_config(request_method='GET')
-    def get(request):
+    def query(self):
+        query = self.request.db.query(Entry)
+        query = query.filter(Entry.access_key == self.access_key)
+
+        q = self.request.GET.get('q', None)
+        if q is None:
+            log.warn('query is empty')
+
+        return {
+            'entries': [item.to_dict() for item in query]
+        }
+
+    @view_config(route_name='api_entries_id', request_method='GET')
+    def get(self):
         """
 
         :param request:
         :return:
         """
-        return {
-            'expenses': [
-                {'id': 'cat01', 'category': 'cat01', 'amount': 10}
-            ],
-            'incomes': [
-                {'id': 'cat01', 'category': 'cat01', 'amount': 10}
-            ]
-        }
+        id_ = self.request.matchdict.get('id', None)
+        query = self._query.filter(Entry.access_key == self.access_key and Entry.id == id_)
+
+        try:
+            entry = query.one()
+
+            return {
+                'entry': entry.to_dict()
+            }
+        except NoResultFound:
+            raise HTTPNotFound()
+
+    @view_config(request_method='POST')
+    def post(self):
+        """
+
+        :return:
+        """
+        data = self.request.json_body
+        data['access_key'] = '0'
+
+        entry = Entry(**data)
+        self.request.db.add(entry)
+        with transaction.manager:
+            self.request.db.commit()
+
+            self.request.db.refresh(entry)
+            return {
+                'entry': entry.to_dict()
+            }

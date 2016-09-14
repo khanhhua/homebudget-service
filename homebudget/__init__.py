@@ -34,6 +34,7 @@ def main(global_config, **settings):
     config.add_route('api_categories', '/api/categories')
     config.add_route('api_categories_id', '/api/categories/{id}')
     config.add_route('api_entries', '/api/entries')
+    config.add_route('api_entries_id', '/api/entries/{id}')
 
     config.scan()
     return config.make_wsgi_app()
