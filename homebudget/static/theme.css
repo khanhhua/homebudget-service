@@ -1,0 +1,15 @@
+.app-name {
+    font-weight: 100;
+}
+
+.panel-default.panel-login {
+    margin-top: 20%;
+
+    border-width: 0;
+
+    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+}
+
+.panel-default.panel-login .panel-heading {
+    background-color: transparent;
+}

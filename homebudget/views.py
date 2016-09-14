@@ -63,6 +63,7 @@ def facebook_callback(request):
         request.db.add(user)
 
         request.session['access_token'] = access_token
+        request.session['user'] = user_data['email']
         return HTTPFound(location='/')
 
     else:

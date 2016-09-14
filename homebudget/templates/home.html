@@ -5,15 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="pyramid web application">
-    <meta name="author" content="Pylons Project">
+    <meta name="author" content="Khanh Hua <giakhanh2487@gmail.com>">
     <link rel="shortcut icon" href="{{request.static_url('homebudget:static/pyramid-16x16.png')}}">
 
-    <title>Starter Scaffold for The Pyramid Web Framework</title>
+    <title>Home Budget | Khanh Hua</title>
 
     <!-- Bootstrap core CSS -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this scaffold -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
     <link href="{{request.static_url('homebudget:static/theme.css')}}" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -26,8 +27,23 @@
   <body>
 
     <div class="container">
-      <div class="col-xs-12">
-        <button class="btn btn-primary" onclick="login()">Login</button>
+      <div class="col-xs-12 col-sm-4 col-sm-push-4">
+        <h1 class="app-name">Home Budget <small>clone</small></h1>
+
+        <div class="panel panel-default panel-login">
+          <div class="panel-heading">Login</div>
+          <div class="panel-body">
+            <div class="text-center">
+              <button class="btn btn-primary" onclick="login()">
+                <i class="fa fa-facebook-official"></i> Facebook
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dislaimer">
+          <p>&ast;This is a clone from the official <a href="http://www.anishu.com/" target="_blank">Home Budget</a></p>
+        </div>
       </div>
     </div>
 
@@ -45,16 +61,6 @@
                    '&scope=email'].join('');
         var popup = window.open(url, "_self", "toolbar=0,scrollbars=0,resizable=0,top=500,left=500,width=800,height=500");
         popup.document.body.style = 'overflow: hidden;';
-//        FB.login(function(response) {
-//          if (response.authResponse) {
-//           console.log('Welcome!  Fetching your information.... ');
-//           FB.api('/me', function(response) {
-//             console.log('Good to see you, ' + response.name + '.');
-//           });
-//          } else {
-//           console.log('User cancelled login or did not fully authorize.');
-//          }
-//        });
       }
 
       window.fbAsyncInit = function() {
@@ -75,6 +81,7 @@
             var accessToken = response.authResponse.accessToken;
 
             console.debug('user:', uid, accessToken);
+            // initialize the application view
           } else if (response.status === 'not_authorized') {
             // the user is logged in to Facebook,
             // but has not authenticated your app

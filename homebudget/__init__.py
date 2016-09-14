@@ -21,6 +21,8 @@ def main(global_config, **settings):
     config.registry.dbmaker = sessionmaker(bind=engine)
     config.add_request_method(db, reify=True)
 
+    config.add_request_method(current_user, reify=True)
+
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
     config.add_route('facebook_callback', '/auth/facebook')
@@ -49,3 +51,10 @@ def db(request):
     request.add_finished_callback(cleanup)
 
     return session
+
+
+def current_user(request):
+    if 'user' not in request.session:
+        return None
+
+    return request.session['user']
