@@ -1,8 +1,11 @@
 from pyramid.config import Configurator
 # See http://docs.pylonsproject.org/projects/pyramid_cookbook/en/latest/database/sqlalchemy.html
 # See http://docs.pylonsproject.org/projects/pyramid_cookbook/en/latest/database/index.html
+from pyramid.session import SignedCookieSessionFactory
+
 from sqlalchemy import engine_from_config
 from sqlalchemy.orm import sessionmaker
+
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
@@ -10,6 +13,9 @@ def main(global_config, **settings):
     config = Configurator(settings=settings)
     config.include('pyramid_jinja2')
     config.add_jinja2_renderer('.html')
+
+    session_factory = SignedCookieSessionFactory('GPwzx57Dpsh2GPl')
+    config.set_session_factory(session_factory)
 
     engine = engine_from_config(settings, prefix='sqlalchemy.')
     config.registry.dbmaker = sessionmaker(bind=engine)
