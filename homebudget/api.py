@@ -10,9 +10,22 @@ API DOCUMENTATION
 ## BUSINESS
 
 """
-from pyramid.httpexceptions import HTTPFound
+import logging
+from time import time
+
+from hashids import Hashids
+
+from pyramid.httpexceptions import HTTPFound, HTTPBadRequest, HTTPNotFound
 from pyramid.view import view_config, view_defaults
 
+from .models import (Category,
+                     Entry,
+                     User
+                     )
+
+log = logging.getLogger(__name__)
+
+hasher = Hashids(min_length=16)
 
 @view_config(route_name='api_quota', renderer='json', request_method='GET')
 def quota(request):
@@ -48,18 +61,55 @@ class CategoriesRESTView(object):
 
     def __init__(self, request):
         self.request = request
+        self.access_key = request.headers.get('x-access-key', None)
+
+        if self.access_key is None:
+            raise HTTPBadRequest()
 
     @view_config(request_method='GET')
-    def get(request):
+    def query(self):
         """
 
         :param request:
         :return:
         """
+        categories = self.request.db.query(Category)
+        q = self.request.GET.get('q', None)
+        if q is None:
+            log.warn('query is empty')
+
         return {
-            'categories': [
-                {'id': 'cat01', 'label': 'Housing'}
-            ]
+            'categories': [item.to_dict() for item in categories]
+        }
+
+    @view_config(route_name='api_categories_id', request_method='GET')
+    def get(self):
+        id_ = self.request.matchdict.get('id')
+        category = self.request.db.query(Category).get(id_)
+
+        if category is None:
+            raise HTTPNotFound()
+
+        return {
+            'category': category.to_dict()
+        }
+
+    @view_config(request_method='POST')
+    def post(self):
+        """
+
+        :param request:
+        :return:
+        """
+        data = self.request.json_body
+        data['id'] = hasher.encode(int(time()))
+        data['access_key'] = '0'
+
+        category = Category(**data)
+        self.request.db.add(category)
+
+        return {
+            'category': category.to_dict()
         }
 
 

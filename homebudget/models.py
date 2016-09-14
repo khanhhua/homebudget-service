@@ -6,6 +6,18 @@ from sqlalchemy.dialects.postgresql import JSON
 Base = declarative_base()
 
 
+class Serializable(object):
+    def to_dict(self):
+        fields = type(self). __dict__.get('__serialize__')
+
+        result = dict()
+        for field in fields:
+            if hasattr(self, field):
+                result[field] = getattr(self, field)
+
+        return result
+
+
 class User(Base):
 
     __tablename__ = "users"
@@ -15,9 +27,10 @@ class User(Base):
     facebook = Column(JSON(), nullable=False)
 
 
-class Category(Base):
+class Category(Serializable, Base):
 
     __tablename__ = "categories"
+    __serialize__ = ['id', 'label']
 
     id = Column(String(16), primary_key=True)
     access_key = Column(String(8), nullable=False)
@@ -28,9 +41,10 @@ class Category(Base):
     subcategories = relationship("Category")
 
 
-class Entry(Base):
+class Entry(Serializable, Base):
 
     __tablename__ = "entries"
+    __serialize__ = ['id', 'type', 'amount', 'category_id']
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     access_key = Column(String(8), nullable=False)

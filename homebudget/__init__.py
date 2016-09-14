@@ -32,6 +32,7 @@ def main(global_config, **settings):
     config.add_route('api_settings', '/api/settings')
     # - - - - - - - - - - - - - - - - - - - - - - - -
     config.add_route('api_categories', '/api/categories')
+    config.add_route('api_categories_id', '/api/categories/{id}')
     config.add_route('api_entries', '/api/entries')
 
     config.scan()
