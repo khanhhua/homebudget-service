@@ -12,7 +12,7 @@ def home(request):
     return {'project': 'HomeBudget'}
 
 
-@view_config(route_name='facebook_callback')
+@view_config(route_name='facebook_callback', renderer='templates/auth_success.html')
 def facebook_callback(request):
     """
     1. Accept the access token from Facebook OAuth2 provider
@@ -26,7 +26,7 @@ def facebook_callback(request):
         raise HTTPBadRequest()
 
     client_id = '1771952326416166'
-    redirect_uri = 'http://localhost:6543/auth/facebook'
+    redirect_uri = request.path_url
     client_secret = '5e87e4e35fd358f7b635bdffb81906cc'
 
     access_token_url = 'https://graph.facebook.com/v2.7/oauth/access_token'
@@ -64,7 +64,7 @@ def facebook_callback(request):
 
         request.session['access_token'] = access_token
         request.session['user'] = user_data['email']
-        return HTTPFound(location='/')
+        return {}
 
     else:
         raise HTTPBadRequest()

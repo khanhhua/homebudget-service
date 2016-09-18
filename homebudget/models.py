@@ -1,19 +1,29 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, Float, String, ForeignKey
+from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import JSON
+
+from datetime import datetime
 
 Base = declarative_base()
 
 
 class Serializable(object):
-    def to_dict(self):
+    def to_dict(self, extra_fields=None):
         fields = type(self). __dict__.get('__serialize__')
 
         result = dict()
         for field in fields:
             if hasattr(self, field):
-                result[field] = getattr(self, field)
+                value = getattr(self, field)
+                if type(value) is datetime:
+                    result[field] = value.isoformat()
+                else:
+                    result[field] = value
+
+        if extra_fields is not None:
+            for field, value in extra_fields.items():
+                result[field] = value
 
         return result
 
@@ -25,6 +35,9 @@ class User(Base):
     id = Column(String(255), primary_key=True) # id is the email
     name = Column(String(50), nullable=False)
     facebook = Column(JSON(), nullable=False)
+
+    # Financial settings
+    currency = Column(String(3), nullable=False, default='USD')
 
 
 class Category(Serializable, Base):
@@ -44,7 +57,10 @@ class Category(Serializable, Base):
 class Entry(Serializable, Base):
 
     __tablename__ = "entries"
-    __serialize__ = ['id', 'type', 'amount', 'category_id']
+    __serialize__ = ['id', 'type', 'accounted_on', 'amount', 'category_id']
+
+    INCOME = 'income'
+    EXPENSE = 'expense'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     access_key = Column(String(8), nullable=False)
@@ -52,5 +68,7 @@ class Entry(Serializable, Base):
     type = Column(String(8), nullable=False)
     amount = Column(Float, nullable=False)
     category_id = Column(String(16), ForeignKey('categories.id'))
+    created_on = Column(DateTime(timezone=True), default=datetime.utcnow)
+    accounted_on = Column(DateTime(timezone=True), nullable=False)
 
     category = relationship("Category")

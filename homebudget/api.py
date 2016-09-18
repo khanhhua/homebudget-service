@@ -16,8 +16,10 @@ from time import time
 import transaction
 from hashids import Hashids
 
-from pyramid.httpexceptions import HTTPFound, HTTPBadRequest, HTTPNotFound
+from pyramid.httpexceptions import HTTPBadRequest, HTTPNotFound, HTTPForbidden
 from pyramid.view import view_config, view_defaults
+
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 
 from .models import (Category,
@@ -44,18 +46,67 @@ def quota(request):
     }
 
 
-@view_config(route_name='api_settings', renderer='json', request_method='GET')
-def get_settings(request):
-    """
+@view_defaults(route_name='api_settings', renderer='json')
+class SettingsRESTView(object):
 
-    :param request:
-    :return:
-    """
-    return {
-        'categories': [
-            {'id': 'cat01', 'label': 'Housing'}
-        ]
-    }
+    def __init__(self, request):
+        self.request = request
+
+    @view_config(request_method='GET')
+    def get_settings(self):
+        """
+
+        :param request:
+        :return:
+        """
+        request = self.request
+
+        if request.current_user is None:
+            raise HTTPForbidden()
+
+        access_key = request.headers.get('x-access-key', None)
+        if access_key is None:
+            raise HTTPBadRequest()
+
+        user = request.db.query(User).get(request.current_user)
+
+        return {
+            'settings': dict(currency=user.currency)
+        }
+
+    @view_config(request_method='POST')
+    def post(self):
+        """
+
+        :param request:
+        :return:
+        """
+        request = self.request
+
+        if request.current_user is None:
+            raise HTTPForbidden()
+
+        access_key = request.headers.get('x-access-key', None)
+        if access_key is None:
+            raise HTTPBadRequest()
+
+        user = request.db.query(User).get(request.current_user)
+
+        data = request.json_body
+        settings = data['settings']
+
+        user_has_changed = False
+        if 'currency' in settings:
+            user.currency = settings['currency']
+            user_has_changed = True
+
+        if user_has_changed:
+            request.db.add(user)
+
+
+        return {
+            'settings': dict(currency=user.currency)
+        }
 
 
 @view_defaults(route_name='api_categories', renderer='json')
@@ -129,7 +180,7 @@ class EntriesRESTView(object):
 
     @view_config(request_method='GET')
     def query(self):
-        query = self.request.db.query(Entry)
+        query = self.request.db.query(Entry).options(joinedload('category'))
         query = query.filter(Entry.access_key == self.access_key)
 
         q = self.request.GET.get('q', None)
@@ -137,7 +188,7 @@ class EntriesRESTView(object):
             log.warn('query is empty')
 
         return {
-            'entries': [item.to_dict() for item in query]
+            'entries': [item.to_dict(dict(category_label=item.category.label)) for item in query]
         }
 
     @view_config(route_name='api_entries_id', request_method='GET')
@@ -175,5 +226,5 @@ class EntriesRESTView(object):
 
             self.request.db.refresh(entry)
             return {
-                'entry': entry.to_dict()
+                'entry': entry.to_dict(dict(category_label=entry.category.label))
             }
