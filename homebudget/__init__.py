@@ -14,6 +14,10 @@ def main(global_config, **settings):
     config.include('pyramid_jinja2')
     config.add_jinja2_renderer('.html')
 
+    config.include('.cors');
+    # make sure to add this before other routes to intercept OPTIONS
+    config.add_cors_preflight_handler()
+
     session_factory = SignedCookieSessionFactory('GPwzx57Dpsh2GPl')
     config.set_session_factory(session_factory)
 

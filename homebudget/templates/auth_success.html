@@ -5,6 +5,16 @@
   <title>Authentication Successful</title>
 </head>
 <body>
-  <script>window.close()</script>
+{% if back_url %}
+  <script>
+  var backURL = '{{back_url}}';
+  console.debug('backURL:', backURL);
+  window.location.href = backURL;
+  </script>
+{% else %}
+  <script>
+  window.close();
+  </script>
+{% endif %}
 </body>
 </html>

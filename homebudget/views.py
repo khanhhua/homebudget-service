@@ -1,4 +1,6 @@
+from os import environ
 import logging
+from urllib import urlencode
 
 from pyramid.httpexceptions import HTTPFound, HTTPBadRequest
 from pyramid.view import view_config
@@ -6,6 +8,8 @@ from pyramid.view import view_config
 from requests import get
 
 log = logging.getLogger(__name__)
+
+PROD = environ.get('env', None) == 'prod'
 
 @view_config(route_name='home', renderer='templates/home.html')
 def home(request):
@@ -22,11 +26,13 @@ def facebook_callback(request):
     :return:
     """
     code = request.GET.get('code', None)
+    back_url = request.GET.get('back', None)
+
     if code is None:
         raise HTTPBadRequest()
 
     client_id = '1771952326416166'
-    redirect_uri = request.path_url
+    redirect_uri = request.path_url + (('?' + urlencode({'back': back_url})) if back_url else '') # '?back=http%3A%2F%2Flocalhost%3A8080%2F'
     client_secret = '5e87e4e35fd358f7b635bdffb81906cc'
 
     access_token_url = 'https://graph.facebook.com/v2.7/oauth/access_token'
@@ -64,7 +70,9 @@ def facebook_callback(request):
 
         request.session['access_token'] = access_token
         request.session['user'] = user_data['email']
-        return {}
+        return {
+            'back_url':back_url
+        }
 
     else:
         raise HTTPBadRequest()
