@@ -1,5 +1,6 @@
 from os import environ
 import logging
+import json
 from urllib import urlencode
 
 from pyramid.httpexceptions import HTTPFound, HTTPBadRequest
@@ -35,6 +36,7 @@ def facebook_callback(request):
     redirect_uri = request.path_url + (('?' + urlencode({'back': back_url})) if back_url else '') # '?back=http%3A%2F%2Flocalhost%3A8080%2F'
     client_secret = '5e87e4e35fd358f7b635bdffb81906cc'
 
+    logging.info('Redirect URI: %s' % redirect_uri)
     access_token_url = 'https://graph.facebook.com/v2.7/oauth/access_token'
 
     response = get(access_token_url, params=dict(code=code,
@@ -75,4 +77,6 @@ def facebook_callback(request):
         }
 
     else:
+        logging.error(json.dumps(data))
+        logging.error('Redirect URI: %s' % redirect_uri)
         raise HTTPBadRequest()
