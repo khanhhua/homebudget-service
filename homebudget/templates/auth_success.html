@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Authentication Successful</title>
+</head>
+<body>
+{% if back_url %}
+  <script>
+  var backURL = '{{back_url}}';
+  console.debug('backURL:', backURL);
+  window.location.href = backURL;
+  </script>
+{% else %}
+  <script>
+  window.close();
+  </script>
+{% endif %}
+</body>
+</html>

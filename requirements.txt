@@ -1,4 +1,6 @@
+hashids==1.1.0
 Jinja2==2.8
+Mako==1.0.4
 MarkupSafe==0.23
 PasteDeploy==1.5.2
 psycopg2==2.6.2
@@ -7,7 +9,9 @@ pyramid==1.7.3
 pyramid-debugtoolbar==3.0.4
 pyramid-jinja2==2.6.2
 pyramid-mako==1.0.2
+pytz==2016.6.1
 repoze.lru==0.6
+requests==2.11.1
 SQLAlchemy==1.0.15
 transaction==1.6.1
 translationstring==1.3

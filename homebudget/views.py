@@ -1,4 +1,7 @@
+from os import environ
 import logging
+import json
+from urllib import urlencode
 
 from pyramid.httpexceptions import HTTPFound, HTTPBadRequest
 from pyramid.view import view_config
@@ -7,12 +10,14 @@ from requests import get
 
 log = logging.getLogger(__name__)
 
+PROD = environ.get('env', None) == 'prod'
+
 @view_config(route_name='home', renderer='templates/home.html')
 def home(request):
     return {'project': 'HomeBudget'}
 
 
-@view_config(route_name='facebook_callback')
+@view_config(route_name='facebook_callback', renderer='templates/auth_success.html')
 def facebook_callback(request):
     """
     1. Accept the access token from Facebook OAuth2 provider
@@ -22,13 +27,16 @@ def facebook_callback(request):
     :return:
     """
     code = request.GET.get('code', None)
+    back_url = request.GET.get('back', None)
+
     if code is None:
         raise HTTPBadRequest()
 
     client_id = '1771952326416166'
-    redirect_uri = 'http://localhost:6543/auth/facebook'
+    redirect_uri = request.path_url + (('?' + urlencode({'back': back_url})) if back_url else '') # '?back=http%3A%2F%2Flocalhost%3A8080%2F'
     client_secret = '5e87e4e35fd358f7b635bdffb81906cc'
 
+    logging.info('Redirect URI: %s' % redirect_uri)
     access_token_url = 'https://graph.facebook.com/v2.7/oauth/access_token'
 
     response = get(access_token_url, params=dict(code=code,
@@ -64,7 +72,11 @@ def facebook_callback(request):
 
         request.session['access_token'] = access_token
         request.session['user'] = user_data['email']
-        return HTTPFound(location='/')
+        return {
+            'back_url':back_url
+        }
 
     else:
+        logging.error(json.dumps(data))
+        logging.error('Redirect URI: %s' % redirect_uri)
         raise HTTPBadRequest()
