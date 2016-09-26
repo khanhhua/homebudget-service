@@ -1,6 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, CHAR
 from sqlalchemy.dialects.postgresql import JSON
 
 from datetime import datetime
@@ -39,14 +39,17 @@ class User(Base):
     # Financial settings
     currency = Column(String(3), nullable=False, default='USD')
 
+    # Licensing
+    access_key = Column(CHAR(8), nullable=False)
+
 
 class Category(Serializable, Base):
 
     __tablename__ = "categories"
     __serialize__ = ['id', 'label']
 
-    id = Column(String(16), primary_key=True)
-    access_key = Column(String(8), nullable=False)
+    id = Column(CHAR(16), primary_key=True)
+    access_key = Column(CHAR(8), nullable=False)
 
     label = Column(String(50))
     parent_id = Column(String(16), ForeignKey('categories.id'))
@@ -63,7 +66,7 @@ class Entry(Serializable, Base):
     EXPENSE = 'expense'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    access_key = Column(String(8), nullable=False)
+    access_key = Column(CHAR(8), nullable=False)
 
     type = Column(String(8), nullable=False)
     amount = Column(Float, nullable=False)

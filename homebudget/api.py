@@ -10,7 +10,8 @@ API DOCUMENTATION
 ## BUSINESS
 
 """
-from os import environ
+from os import environ, urandom
+import binascii
 
 import logging
 from time import time
@@ -65,8 +66,8 @@ def link(request):
         from .models import User
         user = request.db.query(User).get(user_data['email'])
         if user is None:
-            user = User(id=user_data['email'],
-                        name=user_data['name'])
+            user = setup_new_user(request.db, user_data)
+
         user.facebook = dict(id=user_data['id'],
                              access_token=access_token)
         request.db.add(user)
@@ -76,7 +77,7 @@ def link(request):
         payload = {
             'sub': user_data['email'],
             'exp': int(time()) + 3600, # expires in one hour
-            'access_key': 0
+            'access_key': user.access_key
         }
         encoded_payload = jwt.encode(payload, JWT_SECRET)
 
@@ -280,3 +281,31 @@ class EntriesRESTView(object):
             return {
                 'entry': entry.to_dict(dict(category_label=entry.category.label))
             }
+
+
+def setup_new_user(db, user_data):
+    access_key = binascii.hexlify(urandom(4))
+
+    user = User(id=user_data['email'],
+                name=user_data['name'],
+                access_key=access_key)
+    db.add(user)
+
+    categories = ['Housing',
+                  'Departmental',
+                  'Utilities',
+                  'Food',
+                  'Education',
+                  'Transportation',
+                  'Entertainment',
+                  'Home Office']
+    for label in categories:
+        id_ = hasher.encode(int(time() * 1000000))
+        category = Category(id=id_,
+                            access_key=access_key,
+                            label=label)
+        db.add(category)
+
+    db.commit()
+
+    return user
