@@ -8,6 +8,8 @@ from pyramid.view import view_config
 
 from requests import get
 
+from models import setup_new_user
+
 log = logging.getLogger(__name__)
 
 PROD = environ.get('env', None) == 'prod'
@@ -64,8 +66,7 @@ def facebook_callback(request):
         from .models import User
         user = request.db.query(User).get(user_data['email'])
         if user is None:
-            user = User(id=user_data['email'],
-                        name=user_data['name'])
+            user = setup_new_user(request.db, user_data)
         user.facebook = dict(id=user_data['id'],
                              access_token=access_token)
         request.db.add(user)

@@ -1,3 +1,7 @@
+from os import urandom
+import binascii
+from time import time
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, CHAR
@@ -5,8 +9,11 @@ from sqlalchemy.dialects.postgresql import JSON
 
 from datetime import datetime
 
+from hashids import Hashids
+
 Base = declarative_base()
 
+hasher = Hashids(min_length=16)
 
 class Serializable(object):
     def to_dict(self, extra_fields=None):
@@ -75,3 +82,33 @@ class Entry(Serializable, Base):
     accounted_on = Column(DateTime(timezone=True), nullable=False)
 
     category = relationship("Category")
+
+
+def setup_new_user(db, user_data):
+    access_key = binascii.hexlify(urandom(4))
+    if access_key is None:
+        raise Exception('Could not create access key')
+
+    user = User(id=user_data['email'],
+                name=user_data['name'],
+                access_key=access_key)
+    db.add(user)
+
+    categories = ['Housing',
+                  'Departmental',
+                  'Utilities',
+                  'Food',
+                  'Education',
+                  'Transportation',
+                  'Entertainment',
+                  'Home Office']
+    for label in categories:
+        id_ = hasher.encode(int(time() * 1000000))
+        category = Category(id=id_,
+                            access_key=access_key,
+                            label=label)
+        db.add(category)
+
+    db.commit()
+
+    return user

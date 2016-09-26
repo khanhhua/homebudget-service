@@ -29,7 +29,8 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from .models import (Category,
                      Entry,
-                     User
+                     User,
+                     setup_new_user
                      )
 
 log = logging.getLogger(__name__)
@@ -281,36 +282,3 @@ class EntriesRESTView(object):
             return {
                 'entry': entry.to_dict(dict(category_label=entry.category.label))
             }
-
-
-def setup_new_user(db, user_data):
-    access_key = binascii.hexlify(urandom(4))
-
-    access_key = '0000000'
-    print 'Access key: %s' % access_key
-    if access_key is None:
-        raise Exception('Could not create access key')
-
-    user = User(id=user_data['email'],
-                name=user_data['name'],
-                access_key=access_key)
-    db.add(user)
-
-    categories = ['Housing',
-                  'Departmental',
-                  'Utilities',
-                  'Food',
-                  'Education',
-                  'Transportation',
-                  'Entertainment',
-                  'Home Office']
-    for label in categories:
-        id_ = hasher.encode(int(time() * 1000000))
-        category = Category(id=id_,
-                            access_key=access_key,
-                            label=label)
-        db.add(category)
-
-    db.commit()
-
-    return user
