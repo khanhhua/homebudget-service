@@ -285,6 +285,8 @@ class EntriesRESTView(object):
 
 def setup_new_user(db, user_data):
     access_key = binascii.hexlify(urandom(4))
+
+    log.info('Access key: %s' % access_key)
     if access_key is None:
         raise Exception('Could not create access key')
 
