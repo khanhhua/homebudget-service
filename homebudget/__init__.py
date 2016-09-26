@@ -1,10 +1,16 @@
 from pyramid.config import Configurator
 # See http://docs.pylonsproject.org/projects/pyramid_cookbook/en/latest/database/sqlalchemy.html
 # See http://docs.pylonsproject.org/projects/pyramid_cookbook/en/latest/database/index.html
+from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.session import SignedCookieSessionFactory
 
 from sqlalchemy import engine_from_config
 from sqlalchemy.orm import sessionmaker
+
+import jwt
+from os import environ
+
+JWT_SECRET = environ.get('JWT_SECRET', None) or 's3cr3t'
 
 
 def main(global_config, **settings):
@@ -32,6 +38,7 @@ def main(global_config, **settings):
     config.add_route('facebook_callback', '/auth/facebook')
 
     # - - - - - - - - - - - - - - - - - - - - - - - -
+    config.add_route('api_link', '/api/link')
     config.add_route('api_quota', '/api/quota')
     config.add_route('api_settings', '/api/settings')
     # - - - - - - - - - - - - - - - - - - - - - - - -
@@ -60,7 +67,19 @@ def db(request):
 
 
 def current_user(request):
-    if 'user' not in request.session:
-        return None
+    if 'Authorization' in request.headers and request.headers['Authorization'].index('jwt ') == 0:
+        jwt_payload = request.headers['Authorization'][4:]
+        if len(jwt_payload) == 0:
+            raise HTTPBadRequest()
 
-    return request.session['user']
+        try:
+            decoded_payload = jwt.decode(jwt_payload, JWT_SECRET)
+            return {
+                'id': decoded_payload['sub'],
+                'access_key': decoded_payload['access_key']
+            }
+        except jwt.ExpiredSignatureError:
+            raise HTTPBadRequest()
+
+    else:
+        return None
