@@ -240,7 +240,8 @@ class EntriesRESTView(object):
             log.warn('query is empty')
 
         return {
-            'entries': [item.to_dict(dict(category_label=item.category.label)) for item in query]
+            'entries': [item.to_dict(dict(category_label=item.category.label if item.category is not None else 'Income')
+                                     ) for item in query]
         }
 
     @view_config(route_name='api_entries_id', request_method='GET')
